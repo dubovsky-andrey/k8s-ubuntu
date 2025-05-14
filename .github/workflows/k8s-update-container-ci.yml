@@ -1,56 +1,63 @@
+name: Build, Test & Publish ARM64 Docker image
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-  build:
+  build-and-push:
     runs-on: self-hosted-arm
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
+
+    env:
+      # при желании можно вынести в секреты или inputs
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Extract distro
+      - name: Extract distro tag
         run: |
-          set -euo pipefail
           DISTRO=$(awk '/^FROM / { split($2,a,":"); print a[2]; exit }' Dockerfile.dockerfile)
-          echo "DISTRO=$DISTRO" >> $GITHUB_ENV
+          echo "DISTRO=${DISTRO}" >> $GITHUB_ENV
 
-      - name: Set up QEMU
+      - name: Prepare QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Buildx
+      - name: Prepare Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build (no push) and test image
+      - name: Build & load ARM64 image (test)
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile.dockerfile
-          platforms: linux/${{ matrix.arch }}
+          platforms: linux/arm64
+          push: false
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: |
-            ghcr.io/${{ github.repository }}:test-${{ matrix.arch }}
+          cache-from: type=gha,scope=arm64
+          cache-to:   type=gha,mode=max,scope=arm64
+          tags: ${{ env.IMAGE_NAME }}:test-arm64
 
-      - name: Run image for validation
+      - name: Run container to validate
         run: |
-          docker run --rm ghcr.io/${{ github.repository }}:test-${{ matrix.arch }}
+          docker run --rm ${{ env.IMAGE_NAME }}:test-arm64
 
-      - name: Push final tags
-        if: matrix.arch == 'amd64'
+      - name: Push ARM64 image to registry
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile.dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}
-            ghcr.io/${{ github.repository }}:latest
+            ${{ env.IMAGE_NAME }}:${{ env.DISTRO }}
+            ${{ env.IMAGE_NAME }}:latest
