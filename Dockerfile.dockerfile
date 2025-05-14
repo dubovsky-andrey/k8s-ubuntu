@@ -23,7 +23,6 @@ RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
  && dpkg-reconfigure -f noninteractive tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-# Optional: drop root privileges
 RUN useradd -m -s /bin/bash appuser
 USER appuser
 
