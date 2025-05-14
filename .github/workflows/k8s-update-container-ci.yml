@@ -1,18 +1,6 @@
-name: Build, Test & Publish Docker image
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  build-test-push:
+  build:
     runs-on: self-hosted-arm
-    timeout-minutes: 20
-
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -20,21 +8,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract distro from Dockerfile
-        id: get_distro
-        shell: bash
+      - name: Extract distro
         run: |
-          DISTRO=$(grep -m1 '^FROM ' Dockerfile.dockerfile | cut -d':' -f2)
-          echo "Found distro  $DISTRO"
+          set -euo pipefail
+          DISTRO=$(awk '/^FROM / { split($2,a,":"); print a[2]; exit }' Dockerfile.dockerfile)
           echo "DISTRO=$DISTRO" >> $GITHUB_ENV
 
-      - name: Show distro / arch
-        run: echo " Building for distro=${{ env.DISTRO }}, arch=${{ matrix.arch }}"
-
-      - name: Set up QEMU (для cross-build)
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
@@ -44,27 +27,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
+      - name: Build (no push) and test image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile.dockerfile
-          push: true
+          file: Dockerfile.dockerfile
           platforms: linux/${{ matrix.arch }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
-            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository }}:test-${{ matrix.arch }}
+
+      - name: Run image for validation
+        run: |
+          docker run --rm ghcr.io/${{ github.repository }}:test-${{ matrix.arch }}
+
+      - name: Push final tags
+        if: matrix.arch == 'amd64'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
             ghcr.io/${{ github.repository }}:${{ env.DISTRO }}
             ghcr.io/${{ github.repository }}:latest
-
-      - name: Verify container can start
-        run: |
-          docker run --rm \
-            --privileged \
-            --cap-add=NET_ADMIN \
-            --cap-add=SYS_MODULE \
-            -e CI=true \
-            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
-          echo "::notice::Container started for ${{ matrix.arch }} on ${{ env.DISTRO }}"
-
-      - name: Success notice
-        run: echo "::notice::Image pushed and verified!"
