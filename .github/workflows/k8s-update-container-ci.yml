@@ -10,15 +10,22 @@ permissions:
 
 jobs:
   build-test-push:
-    runs-on: [self-hosted]
+    runs-on: self-hosted
     timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+
+    env:
+      # Ваш «дистрибутив+версия», который будет в тегах
+      DISTRO: ubuntu22.04
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show files
-        run: ls -R .
-
-      - name: Set up QEMU
+      - name: Set up QEMU (для эмуляции)
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -37,9 +44,15 @@ jobs:
           context: .
           file: ./Dockerfile.dockerfile
           push: true
+
+          # собираем только для одной платформы за раз
+          platforms: linux/${{ matrix.arch }}
+
+          # теги: distro-arch, distro и latest
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}
+            ghcr.io/${{ github.repository }}:latest
 
       - name: Verify container can start (CI mode)
         run: |
@@ -48,8 +61,8 @@ jobs:
             --cap-add=NET_ADMIN \
             --cap-add=SYS_MODULE \
             -e CI=true \
-            ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ github.sha }}
-          echo "::notice::Container started successfully in CI mode"
+            ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
+          echo "::notice::Container started successfully on ${{ matrix.arch }}"
 
       - name: Success notice
         run: echo "::notice::Image pushed and verified!"
