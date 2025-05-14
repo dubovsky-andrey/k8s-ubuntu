@@ -2,7 +2,6 @@ FROM ubuntu:22.04
 
 LABEL org.opencontainers.image.authors="kubernetes-update-container"
 
-# Set non-interactive frontend and timezone
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
