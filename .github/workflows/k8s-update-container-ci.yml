@@ -38,8 +38,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER }}/test-runner-demo:${{ github.sha }}
-            ghcr.io/${{ env.OWNER }}/test-runner-demo:latest
+            ghcr.io/${{ github.repository_owner }}/test-runner-demo:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/test-runner-demo:latest
 
       - name: Verify container can start (CI mode)
         run: |
