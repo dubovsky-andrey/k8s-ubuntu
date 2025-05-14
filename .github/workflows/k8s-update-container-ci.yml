@@ -10,7 +10,6 @@ jobs:
     runs-on: self-hosted-arm
 
     env:
-      # при желании можно вынести в секреты или inputs
       IMAGE_NAME: ghcr.io/${{ github.repository }}
 
     steps:
