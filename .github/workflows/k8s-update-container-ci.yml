@@ -10,22 +10,28 @@ permissions:
 
 jobs:
   build-test-push:
-    runs-on: self-hosted
+    runs-on: self-hosted-arm
     timeout-minutes: 20
 
     strategy:
-      fail-fast: false
       matrix:
         arch: [amd64, arm64]
-
-    env:
-      # Ваш «дистрибутив+версия», который будет в тегах
-      DISTRO: ubuntu22.04
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU (для эмуляции)
+      - name: Extract distro from Dockerfile
+        id: get_distro
+        shell: bash
+        run: |
+          DISTRO=$(grep -m1 '^FROM ' Dockerfile.dockerfile | cut -d':' -f2)
+          echo "Found distro  $DISTRO"
+          echo "DISTRO=$DISTRO" >> $GITHUB_ENV
+
+      - name: Show distro / arch
+        run: echo " Building for distro=${{ env.DISTRO }}, arch=${{ matrix.arch }}"
+
+      - name: Set up QEMU (для cross-build)
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -44,17 +50,13 @@ jobs:
           context: .
           file: ./Dockerfile.dockerfile
           push: true
-
-          # собираем только для одной платформы за раз
           platforms: linux/${{ matrix.arch }}
-
-          # теги: distro-arch, distro и latest
           tags: |
             ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
             ghcr.io/${{ github.repository }}:${{ env.DISTRO }}
             ghcr.io/${{ github.repository }}:latest
 
-      - name: Verify container can start (CI mode)
+      - name: Verify container can start
         run: |
           docker run --rm \
             --privileged \
@@ -62,7 +64,7 @@ jobs:
             --cap-add=SYS_MODULE \
             -e CI=true \
             ghcr.io/${{ github.repository }}:${{ env.DISTRO }}-${{ matrix.arch }}
-          echo "::notice::Container started successfully on ${{ matrix.arch }}"
+          echo "::notice::Container started for ${{ matrix.arch }} on ${{ env.DISTRO }}"
 
       - name: Success notice
         run: echo "::notice::Image pushed and verified!"
