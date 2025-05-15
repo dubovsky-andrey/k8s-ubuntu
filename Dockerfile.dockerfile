@@ -17,10 +17,12 @@ RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
  && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 python3-pip \
+ && apt-get install -y --no-install-recommends \
+      python3 \
+      python3-pip \
+      python3-venv \
+      python3-full \
  && rm -rf /var/lib/apt/lists/*
-
-RUN python3 -m venv /opt/venv
 
 RUN pip install --no-cache-dir regex emoji
 
