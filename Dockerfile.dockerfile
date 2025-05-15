@@ -22,8 +22,8 @@ RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
  && dpkg-reconfigure -f noninteractive tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash appuser
-USER appuser
+# RUN useradd -m -s /bin/bash appuser
+# USER appuser
 
 # Default command
 CMD ["/bin/bash"]
