@@ -39,5 +39,4 @@ RUN apt-get update \
 # RUN useradd -m -s /bin/bash appuser
 # USER appuser
 
-# Default command
 CMD ["/bin/bash"]
