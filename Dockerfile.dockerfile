@@ -2,8 +2,9 @@ FROM ubuntu:25.04
 
 LABEL org.opencontainers.image.authors="k8s-ubuntu"
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC \
+    PATH="/opt/venv/bin:$PATH"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
