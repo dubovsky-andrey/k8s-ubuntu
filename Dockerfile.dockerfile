@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-LABEL org.opencontainers.image.authors="kubernetes-update-container"
+LABEL org.opencontainers.image.authors="kubernetes-container"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
