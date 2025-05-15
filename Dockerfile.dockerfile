@@ -4,6 +4,7 @@ LABEL org.opencontainers.image.authors="k8s-ubuntu"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
+ENV PATH="/opt/venv/bin:$PATH"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -19,7 +20,9 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 python3-pip \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir regex emoji
+RUN python3 -m venv /opt/venv
+
+RUN pip install --no-cache-dir regex emoji
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
