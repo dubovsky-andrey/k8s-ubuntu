@@ -43,7 +43,7 @@ jobs:
           push: false
           load: true
           cache-from: type=gha,scope=arm64
-          cache-to:   type=gha,mode=max,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
           tags: ${{ env.IMAGE_NAME }}:test-arm64
 
       - name: Run container to validate
@@ -59,4 +59,4 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.DISTRO }}
-            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}-${{ env.DISTRO }}:latest
