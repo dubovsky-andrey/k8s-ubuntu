@@ -33,6 +33,7 @@ RUN apt-get update \
       lsb-release \
       jq \
       etcd-client \
+      iputils-ping \
  && rm -rf /var/lib/apt/lists/*
 
 
