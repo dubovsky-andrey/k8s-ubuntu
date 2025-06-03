@@ -34,6 +34,7 @@ RUN apt-get update \
       jq \
       etcd-client \
       iputils-ping \
+      ansible \
  && rm -rf /var/lib/apt/lists/*
 
 
