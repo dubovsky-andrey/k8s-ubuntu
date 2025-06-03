@@ -35,6 +35,7 @@ RUN apt-get update \
       etcd-client \
       iputils-ping \
       ansible \
+      sshpass \
  && rm -rf /var/lib/apt/lists/*
 
 
