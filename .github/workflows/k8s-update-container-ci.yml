@@ -1,4 +1,4 @@
-name: Build, Test & Publish ARM64 Docker image
+name: Build, Test & Publish Docker image
 
 on:
   push:
@@ -21,9 +21,6 @@ jobs:
           DISTRO=$(awk '/^FROM / { split($2,a,":"); print a[2]; exit }' Dockerfile.dockerfile)
           echo "DISTRO=${DISTRO}" >> $GITHUB_ENV
 
-      - name: Prepare QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Prepare Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -34,28 +31,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & load ARM64 image (test)
+      - name: Build & load AMD64 image (test)
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile.dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           push: false
           load: true
-          cache-from: type=gha,scope=arm64
-          cache-to: type=gha,mode=max,scope=arm64
-          tags: ${{ env.IMAGE_NAME }}:test-arm64
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+          tags: ${{ env.IMAGE_NAME }}:test-amd64
 
       - name: Run container to validate
         run: |
-          docker run --rm ${{ env.IMAGE_NAME }}:test-arm64
+          docker run --rm ${{ env.IMAGE_NAME }}:test-amd64
 
-      - name: Push ARM64 image to registry
+      - name: Push AMD64 image to registry
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile.dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.DISTRO }}
