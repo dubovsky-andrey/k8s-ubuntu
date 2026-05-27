@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: self-hosted-arm
+    runs-on: ubuntu-latest
 
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}
