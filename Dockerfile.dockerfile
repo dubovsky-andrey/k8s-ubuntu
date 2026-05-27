@@ -41,8 +41,8 @@ RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubect
 
 RUN set -eux; \
     case "${TARGETARCH}" in \
-      amd64) ARCH="amd64" ;; \
-      arm64) ARCH="arm64" ;; \
+      amd64) ARCH="amd64"; KUBE_LINTER_ARCH="" ;; \
+      arm64) ARCH="arm64"; KUBE_LINTER_ARCH="_arm64" ;; \
       *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
     install_tar_asset() { \
@@ -50,30 +50,18 @@ RUN set -eux; \
       url="$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
         | jq -r --arg pattern "$pattern" '.assets[] | select(.name | test($pattern)) | .browser_download_url' \
         | head -n 1)"; \
-      test -n "$url"; \
+      test -n "$url" || { echo "no release asset matched ${repo}: ${pattern}" >&2; exit 1; }; \
       curl -fsSL "$url" | tar -xz -C /usr/local/bin "$binary"; \
       chmod +x "/usr/local/bin/${binary}"; \
-    }; \
-    install_zip_asset() { \
-      repo="$1"; pattern="$2"; binary="$3"; \
-      tmp="$(mktemp -d)"; \
-      url="$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
-        | jq -r --arg pattern "$pattern" '.assets[] | select(.name | test($pattern)) | .browser_download_url' \
-        | head -n 1)"; \
-      test -n "$url"; \
-      curl -fsSL "$url" -o "${tmp}/asset.zip"; \
-      python3 -m zipfile -e "${tmp}/asset.zip" "$tmp"; \
-      find "$tmp" -type f -name "$binary" -exec install -m 0755 {} "/usr/local/bin/${binary}" \; ; \
-      rm -rf "$tmp"; \
     }; \
     install_tar_asset cilium/cilium-cli "cilium-linux-${ARCH}\\.tar\\.gz$" cilium; \
     install_tar_asset cilium/hubble "hubble-linux-${ARCH}\\.tar\\.gz$" hubble; \
     install_tar_asset zegl/kube-score "kube-score_.*_linux_${ARCH}\\.tar\\.gz$" kube-score; \
-    install_tar_asset stackrox/kube-linter "kube-linter-linux-${ARCH}\\.tar\\.gz$" kube-linter; \
+    install_tar_asset stackrox/kube-linter "kube-linter-linux${KUBE_LINTER_ARCH}\\.tar\\.gz$" kube-linter; \
     install_tar_asset kubernetes-sigs/cri-tools "crictl-v.*-linux-${ARCH}\\.tar\\.gz$" crictl; \
     install_tar_asset itaysk/kubectl-neat "kubectl-neat_linux_${ARCH}\\.tar\\.gz$" kubectl-neat; \
     install_tar_asset stern/stern "stern_.*_linux_${ARCH}\\.tar\\.gz$" stern; \
-    install_zip_asset controlplaneio/kubesec "kubesec_linux_${ARCH}\\.zip$" kubesec; \
+    install_tar_asset controlplaneio/kubesec "kubesec_linux_${ARCH}\\.tar\\.gz$" kubesec; \
     install_tar_asset derailed/k9s "k9s_Linux_${ARCH}\\.tar\\.gz$" k9s
 
 RUN curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
