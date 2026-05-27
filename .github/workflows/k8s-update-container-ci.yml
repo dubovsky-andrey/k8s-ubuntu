@@ -45,7 +45,11 @@ jobs:
 
       - name: Run container to validate
         run: |
-          docker run --rm ${{ env.IMAGE_NAME }}:test-amd64
+          container_id=$(docker run -d ${{ env.IMAGE_NAME }}:test-amd64)
+          trap 'docker rm -f "$container_id"' EXIT
+          sleep 3
+          docker logs "$container_id"
+          docker exec "$container_id" pgrep sshd
 
       - name: Push AMD64 image to registry
         uses: docker/build-push-action@v4
