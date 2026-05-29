@@ -38,7 +38,26 @@ RUN useradd -m -s /bin/bash student \
     && chmod 700 /home/student/.ssh
 
 RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubectl" -o /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl
+    && chmod +x /usr/local/bin/kubectl \
+    && kubectl completion bash > /etc/bash_completion.d/kubectl \
+    && printf '\ncomplete -o default -F __start_kubectl k\n' >> /etc/bash_completion.d/kubectl
+
+RUN install -d /etc/cks-shell \
+    && printf '%s\n' \
+      "export KUBECONFIG=\${KUBECONFIG:-/home/student/.kube/config}" \
+      "alias k=kubectl" \
+      "alias kgp='kubectl get pods'" \
+      "alias kga='kubectl get all'" \
+      "PS1='student@\${CKS_LAB_NAME:-cks-lab}:\\w$ '" \
+      > /etc/cks-shell/bashrc \
+    && printf '%s\n' \
+      'if ! type _get_comp_words_by_ref >/dev/null 2>&1 && [ -f /usr/share/bash-completion/bash_completion ]; then' \
+      '  . /usr/share/bash-completion/bash_completion' \
+      'fi' \
+      'if [ -f /etc/cks-shell/bashrc ]; then' \
+      '  . /etc/cks-shell/bashrc' \
+      'fi' \
+      >> /etc/bash.bashrc
 
 RUN set -eux; \
     case "${TARGETARCH}" in \
