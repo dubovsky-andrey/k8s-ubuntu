@@ -44,16 +44,16 @@ RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubect
 
 RUN install -d /etc/cks-shell \
     && printf '%s\n' \
-      "export KUBECONFIG=\${KUBECONFIG:-/home/student/.kube/config}" \
+      'export KUBECONFIG=${KUBECONFIG:-/home/student/.kube/config}' \
+      'if ! type _get_comp_words_by_ref >/dev/null 2>&1 && [ -f /usr/share/bash-completion/bash_completion ]; then' \
+      '  . /usr/share/bash-completion/bash_completion' \
+      'fi' \
       "alias k=kubectl" \
       "alias kgp='kubectl get pods'" \
       "alias kga='kubectl get all'" \
       "PS1='student@\${CKS_LAB_NAME:-cks-lab}:\\w$ '" \
       > /etc/cks-shell/bashrc \
     && printf '%s\n' \
-      'if ! type _get_comp_words_by_ref >/dev/null 2>&1 && [ -f /usr/share/bash-completion/bash_completion ]; then' \
-      '  . /usr/share/bash-completion/bash_completion' \
-      'fi' \
       'if [ -f /etc/cks-shell/bashrc ]; then' \
       '  . /etc/cks-shell/bashrc' \
       'fi' \
