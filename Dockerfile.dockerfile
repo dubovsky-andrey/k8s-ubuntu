@@ -34,6 +34,7 @@ RUN apt-get update \
 
 RUN useradd -m -s /bin/bash student \
     && mkdir -p /run/sshd /home/student/.ssh /home/student/.kube \
+    && touch /home/student/.hushlogin \
     && chown -R student:student /home/student \
     && chmod 700 /home/student/.ssh
 
@@ -71,6 +72,11 @@ RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubect
 RUN install -d /etc/cks-shell \
     && printf '%s\n' \
       'export KUBECONFIG=${KUBECONFIG:-/home/student/.kube/config}' \
+      'if [[ $- == *i* ]] && [ -z "${CKS_TASK_SHOWN:-}" ] && [ -f /home/student/task.md ]; then' \
+      '  export CKS_TASK_SHOWN=1' \
+      '  cat /home/student/task.md' \
+      '  echo' \
+      'fi' \
       'if ! type _get_comp_words_by_ref >/dev/null 2>&1 && [ -f /usr/share/bash-completion/bash_completion ]; then' \
       '  . /usr/share/bash-completion/bash_completion' \
       'fi' \
@@ -140,6 +146,13 @@ RUN set -eux; \
     ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx; \
     ln -s /opt/kubectx/kubens /usr/local/bin/kubens
 
+
+RUN sed -i -E \
+      -e 's/^([[:space:]]*session[[:space:]]+optional[[:space:]]+pam_motd.so)/#\1/' \
+      -e 's/^([[:space:]]*session[[:space:]]+optional[[:space:]]+pam_lastlog.so)/#\1/' \
+      /etc/pam.d/sshd \
+    && install -d /etc/ssh/sshd_config.d \
+    && printf '%s\n' 'PrintMotd no' 'PrintLastLog no' > /etc/ssh/sshd_config.d/99-cks-quiet-login.conf
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config \
     && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config \
     && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
