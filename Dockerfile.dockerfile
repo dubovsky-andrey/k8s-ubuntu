@@ -83,7 +83,7 @@ RUN install -d /etc/cks-shell \
       "alias k=kubectl" \
       "alias kgp='kubectl get pods'" \
       "alias kga='kubectl get all'" \
-      "PS1='student@\${CKS_LAB_NAME:-cks-lab}:\\w$ '" \
+      "PS1='\[\033[31m\]student@\${CKS_LAB_NAME:-cks-lab}:\\w$ \[\033[0m\]'" \
       > /etc/cks-shell/bashrc \
     && printf '%s\n' \
       'if [ -f /etc/cks-shell/bashrc ]; then' \
