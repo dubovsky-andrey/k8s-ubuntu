@@ -6,6 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+      apparmor \
+      apparmor-utils \
       bash \
       bash-completion \
       ca-certificates \
@@ -106,8 +108,29 @@ RUN set -eux; \
       curl -fsSL "$url" | tar -xz -C /usr/local/bin "$binary"; \
       chmod +x "/usr/local/bin/${binary}"; \
     }; \
+    install_binary_asset() { \
+      repo="$1"; pattern="$2"; binary="$3"; \
+      url="$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
+        | jq -r --arg pattern "$pattern" '.assets[] | select(.name | test($pattern)) | .browser_download_url' \
+        | head -n 1)"; \
+      test -n "$url" || { echo "no release asset matched ${repo}: ${pattern}" >&2; exit 1; }; \
+      curl -fsSL "$url" -o "/usr/local/bin/${binary}"; \
+      chmod +x "/usr/local/bin/${binary}"; \
+    }; \
+    install_istioctl() { \
+      tmp="$(mktemp -d)"; \
+      url="$(curl -fsSL https://api.github.com/repos/istio/istio/releases/latest \
+        | jq -r --arg arch "$ARCH" '.assets[] | select(.name | test("istio-.*-linux-" + $arch + "\\.tar\\.gz$")) | .browser_download_url' \
+        | head -n 1)"; \
+      test -n "$url" || { echo "no release asset matched istio/istio for ${ARCH}" >&2; exit 1; }; \
+      curl -fsSL "$url" | tar -xz -C "$tmp"; \
+      install -m 0755 "$tmp"/istio-*/bin/istioctl /usr/local/bin/istioctl; \
+      rm -rf "$tmp"; \
+    }; \
+    install_binary_asset argoproj/argo-cd "argocd-linux-${ARCH}$" argocd; \
     install_tar_asset cilium/cilium-cli "cilium-linux-${ARCH}\\.tar\\.gz$" cilium; \
     install_tar_asset cilium/hubble "hubble-linux-${ARCH}\\.tar\\.gz$" hubble; \
+    install_istioctl; \
     install_tar_asset zegl/kube-score "kube-score_.*_linux_${ARCH}\\.tar\\.gz$" kube-score; \
     install_tar_asset stackrox/kube-linter "kube-linter-linux${KUBE_LINTER_ARCH}\\.tar\\.gz$" kube-linter; \
     install_tar_asset kubernetes-sigs/cri-tools "crictl-v.*-linux-${ARCH}\\.tar\\.gz$" crictl; \
