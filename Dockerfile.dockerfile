@@ -27,6 +27,7 @@ RUN apt-get update \
       openssl \
       python3 \
       python3-pip \
+      sudo \
       tar \
       tcpdump \
       tree \
@@ -38,7 +39,12 @@ RUN useradd -m -s /bin/bash student \
     && mkdir -p /run/sshd /home/student/.ssh /home/student/.kube \
     && touch /home/student/.hushlogin \
     && chown -R student:student /home/student \
-    && chmod 700 /home/student/.ssh
+    && chmod 700 /home/student/.ssh \
+    && install -d -m 0750 /etc/sudoers.d \
+    && printf '%s\n' \
+      'student ALL=(root) NOPASSWD: /usr/sbin/apparmor_parser, /usr/sbin/aa-status, /usr/sbin/aa-enabled' \
+      > /etc/sudoers.d/cks-apparmor \
+    && chmod 0440 /etc/sudoers.d/cks-apparmor
 
 RUN curl -fsSL "https://dl.k8s.io/release/v1.36.1/bin/linux/${TARGETARCH}/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
@@ -85,6 +91,9 @@ RUN install -d /etc/cks-shell \
       "alias k=kubectl" \
       "alias kgp='kubectl get pods'" \
       "alias kga='kubectl get all'" \
+      "alias apparmor_parser='sudo apparmor_parser'" \
+      "alias aa-status='sudo aa-status'" \
+      "alias aa-enabled='sudo aa-enabled'" \
       "PS1='\[\033[31m\]student@\${CKS_LAB_NAME:-cks-lab}:\\w$ \[\033[0m\]'" \
       > /etc/cks-shell/bashrc \
     && printf '%s\n' \
