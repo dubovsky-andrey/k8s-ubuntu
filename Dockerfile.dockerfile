@@ -72,9 +72,9 @@ RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubect
 RUN install -d /etc/cks-shell \
     && printf '%s\n' \
       'export KUBECONFIG=${KUBECONFIG:-/home/student/.kube/config}' \
-      'if [[ $- == *i* ]] && [ -z "${CKS_TASK_SHOWN:-}" ] && [ -f /home/student/task.md ]; then' \
+      'if [[ $- == *i* ]] && [ -z "${CKS_TASK_SHOWN:-}" ] && [ -f /home/student/task.txt ]; then' \
       '  export CKS_TASK_SHOWN=1' \
-      '  cat /home/student/task.md' \
+      '  cat /home/student/task.txt' \
       '  echo' \
       'fi' \
       'if ! type _get_comp_words_by_ref >/dev/null 2>&1 && [ -f /usr/share/bash-completion/bash_completion ]; then' \
