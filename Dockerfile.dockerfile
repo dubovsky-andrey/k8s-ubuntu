@@ -40,7 +40,7 @@ RUN useradd -m -s /bin/bash student \
     && chown -R student:student /home/student \
     && chmod 700 /home/student/.ssh
 
-RUN curl -fsSL "https://dl.k8s.io/release/v1.34.0/bin/linux/${TARGETARCH}/kubectl" -o /usr/local/bin/kubectl \
+RUN curl -fsSL "https://dl.k8s.io/release/v1.36.1/bin/linux/${TARGETARCH}/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
     && printf '%s\n' \
       '_cks_kubectl_complete() {' \
