@@ -133,6 +133,22 @@ RUN curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linu
 RUN curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
     | sh -s -- -b /usr/local/bin
 
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) ARCH="amd64" ;; \
+      arm64) ARCH="arm64" ;; \
+      *) echo "unsupported arch ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    url="$(curl -fsSL https://api.github.com/repos/kubernetes-sigs/bom/releases/latest \
+      | jq -r --arg arch "$ARCH" '.assets[] | select(.name | test("linux-" + $arch + "\\.tar\\.gz$")) | .browser_download_url' \
+      | head -n 1)"; \
+    test -n "$url"; \
+    tmp="$(mktemp -d)"; \
+    curl -fsSL "$url" | tar -xz -C "$tmp"; \
+    find "$tmp" -type f -name bom -exec install -m 0755 {} /usr/local/bin/bom \; -quit; \
+    test -x /usr/local/bin/bom; \
+    rm -rf "$tmp"
+
 RUN pip3 install --break-system-packages checkov
 
 RUN set -eux; \
