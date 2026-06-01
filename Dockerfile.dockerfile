@@ -48,33 +48,10 @@ RUN useradd -m -s /bin/bash student \
 
 RUN curl -fsSL "https://dl.k8s.io/release/v1.36.1/bin/linux/${TARGETARCH}/kubectl" -o /usr/local/bin/kubectl \
     && chmod +x /usr/local/bin/kubectl \
+    && kubectl completion bash > /etc/bash_completion.d/kubectl \
     && printf '%s\n' \
-      '_cks_kubectl_complete() {' \
-      '  local cur prev commands resources flags' \
-      '  COMPREPLY=()' \
-      '  cur="${COMP_WORDS[COMP_CWORD]}"' \
-      '  prev="${COMP_WORDS[COMP_CWORD-1]}"' \
-      '  commands="get describe apply delete edit explain logs exec run create expose scale rollout set config auth top cp port-forward wait label annotate patch replace diff version api-resources api-versions cluster-info"' \
-      '  resources="pods po deployments deploy services svc namespaces ns configmaps cm secrets serviceaccounts sa roles rolebindings clusterroles clusterrolebindings networkpolicies netpol ingress ing jobs cronjobs daemonsets ds replicasets rs statefulsets sts nodes no persistentvolumeclaims pvc persistentvolumes pv events ev"' \
-      '  flags="-n --namespace -A --all-namespaces -o --output -l --selector -f --filename --context --kubeconfig --help"' \
-      '  case "$prev" in' \
-      '    -f|--filename|--kubeconfig) _filedir; return ;;' \
-      '    -n|--namespace) COMPREPLY=( $(compgen -W "$(kubectl get ns -o name 2>/dev/null | sed s#namespace/##)" -- "$cur") ); return ;;' \
-      '    -o|--output) COMPREPLY=( $(compgen -W "wide yaml json name jsonpath custom-columns" -- "$cur") ); return ;;' \
-      '  esac' \
-      '  if [[ "$cur" == -* ]]; then' \
-      '    COMPREPLY=( $(compgen -W "$flags" -- "$cur") )' \
-      '  elif [[ $COMP_CWORD -le 1 ]]; then' \
-      '    COMPREPLY=( $(compgen -W "$commands" -- "$cur") )' \
-      '  else' \
-      '    case " ${COMP_WORDS[*]} " in' \
-      '      *" get "*|*" describe "*|*" delete "*|*" edit "*|*" explain "*) COMPREPLY=( $(compgen -W "$resources" -- "$cur") ) ;;' \
-      '      *) COMPREPLY=( $(compgen -W "$flags" -- "$cur") ) ;;' \
-      '    esac' \
-      '  fi' \
-      '}' \
-      'complete -F _cks_kubectl_complete kubectl' \
-      'complete -F _cks_kubectl_complete k' \
+      'alias k=kubectl' \
+      'complete -o default -F __start_kubectl k' \
       > /etc/bash_completion.d/cks-kubectl
 
 RUN install -d /etc/cks-shell \
