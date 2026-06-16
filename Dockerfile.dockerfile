@@ -68,6 +68,7 @@ RUN install -d /etc/cks-shell \
       "alias k=kubectl" \
       "alias kgp='kubectl get pods'" \
       "alias kga='kubectl get all'" \
+      "alias val='sh val.sh'" \
       "alias apparmor_parser='sudo apparmor_parser'" \
       "alias aa-status='sudo aa-status'" \
       "alias aa-enabled='sudo aa-enabled'" \
